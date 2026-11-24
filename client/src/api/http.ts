@@ -6,7 +6,7 @@ export interface UserInfo {
   chips: number;
 }
 
-export const http = axios.create({ baseURL: '/api' });
+export const http = axios.create({ baseURL: '/dz/api' });
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('dz_token');

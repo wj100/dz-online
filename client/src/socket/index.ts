@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export function connectSocket(token: string): Socket {
   if (socket) socket.disconnect();
-  socket = io({ auth: { token } });
+  socket = io({ auth: { token }, path: '/dz/socket.io' });
   return socket;
 }
 

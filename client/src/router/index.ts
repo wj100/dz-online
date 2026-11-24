@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/dz/'),
   routes: [
     { path: '/login', name: 'login', component: () => import('../views/LoginView.vue') },
     { path: '/', name: 'lobby', component: () => import('../views/LobbyView.vue') },
