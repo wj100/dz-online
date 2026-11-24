@@ -33,9 +33,9 @@
         :class="seatClasses(s)"
         :style="seatStyle(s)"
       >
-        <span v-if="showMarks && s.seat === snap!.dealer" class="dealer-tag">D</span>
-        <span v-if="showMarks && s.seat === blinds.sb" class="blind-tag">SB</span>
-        <span v-if="showMarks && s.seat === blinds.bb" class="blind-tag">BB</span>
+        <span v-if="showMarks && s.seat === snap!.dealer" class="dealer-tag">BTN</span>
+        <span v-if="showMarks && s.seat === blinds.sb" class="blind-tag sb">SB</span>
+        <span v-if="showMarks && s.seat === blinds.bb" class="blind-tag bb">BB</span>
         <div class="badge">
           <div class="avatar">{{ avatarOf(s) }}</div>
           <div class="name">{{ s.username || '空位' }}</div>
@@ -440,24 +440,34 @@ function copyInvite(): void {
 .seat .dealer-tag,
 .seat .blind-tag {
   position: absolute;
-  top: -8px;
-  background: #d4af37;
-  color: #1a1408;
-  font-size: 9px;
-  font-weight: 800;
-  width: 16px;
-  height: 16px;
+  top: -10px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  z-index: 3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+.seat .dealer-tag {
+  background: #d4af37;
+  color: #1a1408;
+  right: -8px;
+  left: auto;
 }
 .seat .blind-tag {
   background: #fff;
   color: #333;
-  top: -8px;
-  left: -4px;
+  left: -8px;
+  right: auto;
+}
+.seat .blind-tag.bb {
+  background: #ffe08a;
+  color: #5a3a10;
 }
 .seat .hand {
   display: flex;
@@ -610,6 +620,89 @@ function copyInvite(): void {
   }
   .community {
     gap: 4px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .topbar {
+    padding: 6px 12px;
+  }
+  .brand {
+    font-size: 13px;
+  }
+  .stage-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+  .table-wrap {
+    width: min(120vh, 600px);
+    height: min(78vh, 430px);
+  }
+  .card-slot,
+  .community :deep(.card) {
+    width: 40px;
+    height: 56px;
+  }
+  .community {
+    gap: 5px;
+  }
+  .pot-label {
+    top: calc(50% + 50px);
+  }
+  .pot-amount {
+    font-size: 15px;
+  }
+  .seat {
+    width: 80px;
+    gap: 2px;
+  }
+  .seat .badge {
+    padding: 3px 8px;
+    min-width: 64px;
+    border-radius: 8px;
+  }
+  .seat .avatar {
+    font-size: 18px;
+  }
+  .seat .name,
+  .seat .chips {
+    font-size: 10px;
+  }
+  .seat .hand :deep(.card) {
+    width: 30px;
+    height: 42px;
+  }
+  .seat .dealer-tag,
+  .seat .blind-tag {
+    width: 18px;
+    height: 18px;
+    font-size: 8px;
+    top: -8px;
+  }
+  .seat .action-msg {
+    top: -24px;
+    font-size: 10px;
+  }
+  .controls {
+    padding-bottom: 4px;
+    gap: 5px;
+  }
+  .raise-row input[type='range'] {
+    width: 150px;
+  }
+  .raise-amount {
+    font-size: 12px;
+  }
+  .action-row {
+    gap: 6px;
+  }
+  .btn {
+    padding: 7px 13px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .hint {
+    font-size: 11px;
   }
 }
 </style>
