@@ -294,6 +294,7 @@ function copyInvite(): void {
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   max-height: 820px;
   max-width: 1100px;
   margin: 0 auto;
@@ -623,9 +624,9 @@ function copyInvite(): void {
   }
 }
 
-@media (orientation: landscape) and (max-height: 500px) {
+@media (max-height: 500px) {
   .topbar {
-    padding: 6px 12px;
+    padding: 5px 12px;
   }
   .brand {
     font-size: 13px;
@@ -634,9 +635,12 @@ function copyInvite(): void {
     font-size: 11px;
     padding: 3px 10px;
   }
+  .invite {
+    font-size: 11px;
+  }
   .table-wrap {
-    width: min(120vh, 600px);
-    height: min(78vh, 430px);
+    width: min(105vh, 520px);
+    height: min(70vh, 360px);
   }
   .card-slot,
   .community :deep(.card) {

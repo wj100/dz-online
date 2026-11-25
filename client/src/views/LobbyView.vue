@@ -19,7 +19,7 @@
           <n-form-item label="座位数">
             <n-radio-group v-model:value="maxSeats">
               <n-radio-button :value="0">灵活</n-radio-button>
-              <n-radio-button v-for="n in [2, 3, 4, 6, 9]" :key="n" :value="n">{{ n }} 人</n-radio-button>
+              <n-radio-button v-for="n in [4, 6, 9]" :key="n" :value="n">{{ n }} 人</n-radio-button>
             </n-radio-group>
           </n-form-item>
           <n-form-item label="盲注">
