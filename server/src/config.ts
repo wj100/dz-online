@@ -11,4 +11,5 @@ export const config = {
   defaultSmallBlind: 5,
   defaultBigBlind: 10,
   actionTimeoutMs: 30_000,
+  disconnectKickMs: 60_000,
 };

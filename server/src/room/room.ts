@@ -10,6 +10,7 @@ import {
   totalPot,
 } from '../game/engine.js';
 import type { ActionType, GameSnapshot, HandState, LegalActions, PublicSeatView, SeatState } from '../game/types.js';
+import { config } from '../config.js';
 
 export interface RoomUser {
   id: string;
@@ -39,6 +40,7 @@ interface RoomOptions {
   flexible: boolean;
   actionTimeoutMs: number;
   emitTo: (userId: string, event: string, data: unknown) => void;
+  onAutoKick?: (userId: string, refund: number, stats: PlayerStats) => void;
 }
 
 export class Room {
@@ -56,7 +58,10 @@ export class Room {
   seats: SeatState[] = [];
   handState: HandState;
   private readonly emitTo: RoomOptions['emitTo'];
+  private readonly onAutoKick?: RoomOptions['onAutoKick'];
   private timer: NodeJS.Timeout | null = null;
+  private readonly disconnectTimers = new Map<string, NodeJS.Timeout>();
+  private readonly kickAfterHand = new Set<string>();
 
   constructor(opts: RoomOptions) {
     this.id = opts.id;
@@ -70,6 +75,7 @@ export class Room {
     this.buyIn = opts.buyIn;
     this.actionTimeoutMs = opts.actionTimeoutMs;
     this.emitTo = opts.emitTo;
+    this.onAutoKick = opts.onAutoKick;
     this.seats = this.flexible ? [] : Array.from({ length: this.maxSeats }, (_, i) => this.emptySeat(i));
     this.handState = this.emptyHand();
   }
@@ -169,11 +175,46 @@ export class Room {
     const idx = this.findSeatByUser(userId);
     if (idx === -1) return;
     this.seats[idx].connected = connected;
-    if (connected) this.seats[idx].sittingOut = false;
-    if (!connected && this.handState.activeSeat === idx && this.status === 'playing') {
+    if (connected) {
+      this.seats[idx].sittingOut = false;
+      this.clearDisconnectTimer(userId);
+      this.kickAfterHand.delete(userId);
+      return;
+    }
+    this.startDisconnectTimer(userId);
+    if (this.handState.activeSeat === idx && this.status === 'playing') {
       this.clearTimer();
       this.advance();
     }
+  }
+
+  private startDisconnectTimer(userId: string): void {
+    this.clearDisconnectTimer(userId);
+    const timer = setTimeout(() => {
+      this.disconnectTimers.delete(userId);
+      if (this.status === 'playing') {
+        this.kickAfterHand.add(userId);
+      } else {
+        this.kickPlayer(userId);
+      }
+    }, config.disconnectKickMs);
+    this.disconnectTimers.set(userId, timer);
+  }
+
+  private clearDisconnectTimer(userId: string): void {
+    const timer = this.disconnectTimers.get(userId);
+    if (timer) {
+      clearTimeout(timer);
+      this.disconnectTimers.delete(userId);
+    }
+  }
+
+  private kickPlayer(userId: string): void {
+    const res = this.removePlayer(userId);
+    if (res.ok && res.stats) {
+      this.onAutoKick?.(userId, res.refund ?? 0, res.stats);
+    }
+    this.broadcastState();
   }
 
   rebuy(userId: string, amount: number): { ok: boolean; error?: string } {
@@ -291,6 +332,10 @@ export class Room {
     this.status = 'waiting';
     for (const s of this.seats) {
       if (s.userId && !s.connected) s.sittingOut = true;
+    }
+    for (const userId of [...this.kickAfterHand]) {
+      this.kickAfterHand.delete(userId);
+      this.kickPlayer(userId);
     }
     const summary = this.handState.winners.map((w) => `seat${w.seat}+${w.amount}`).join(', ');
     console.log(`[room ${this.id}] 牌局结束，赢家: ${summary}`);

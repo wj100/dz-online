@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import type { Server } from 'socket.io';
 import { config } from '../config.js';
 import { prisma } from '../db/prisma.js';
-import { Room, type RoomUser } from './room.js';
+import { Room, type PlayerStats, type RoomUser } from './room.js';
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -41,7 +41,8 @@ export class RoomManager {
     });
 
     const flexible = opts?.flexible ?? false;
-    const room = new Room({
+    let room: Room;
+    room = new Room({
       id,
       inviteCode,
       hostId: host.id,
@@ -53,6 +54,9 @@ export class RoomManager {
       buyIn: config.buyIn,
       actionTimeoutMs: config.actionTimeoutMs,
       emitTo: this.emitTo,
+      onAutoKick: (userId, refund, stats) => {
+        void this.handleAutoKick(room, userId, refund, stats);
+      },
     });
     this.rooms.set(id, room);
     this.roomByCode.set(inviteCode, id);
@@ -101,5 +105,28 @@ export class RoomManager {
       return true;
     }
     return false;
+  }
+
+  private async handleAutoKick(room: Room, userId: string, refund: number, stats: PlayerStats): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { chips: { increment: refund }, inPlayChips: 0 },
+    });
+    await prisma.gameSessionPlayer.create({
+      data: {
+        sessionId: room.sessionId,
+        userId: stats.userId,
+        username: stats.username,
+        buyInTotal: stats.buyInTotal,
+        finalChips: stats.finalChips,
+        netProfit: stats.netProfit,
+        vpip: stats.vpip,
+        handsPlayed: stats.handsPlayed,
+        handsWon: stats.handsWon,
+      },
+    });
+    this.clearUserRoom(userId);
+    await this.deleteRoomIfEmpty(room);
+    console.log(`[room ${room.id}] 玩家掉线超时已自动移出: ${stats.username}`);
   }
 }
